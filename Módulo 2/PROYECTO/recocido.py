@@ -1,11 +1,8 @@
-import csv
-import os
-import random
-import math
+import csv, os, random, math
 #Funcion para leer los archivos .csv con las matrices de cada grupo
 #EL CODIGO SOLO ACEPTA VALORES NUMERICOS EN LAS MATRICES, SIN ENCABEZADOS
 #unica funcion que ni nosotros sabemos como funciona, pero es para no tener la matriz de 100x100 escrita aquí tapando medio código
-def leer_matriz_csv(ruta, tamaño_esperado=100):
+def leer_matriz_csv(ruta):
     matriz = []
     with open(ruta, newline='', encoding='utf-8') as archivo:
         lector = csv.reader(archivo)
@@ -18,25 +15,15 @@ def leer_matriz_csv(ruta, tamaño_esperado=100):
                     except ValueError:
                         fila_numeros.append(0.0)
                 matriz.append(fila_numeros)
-    if not matriz or len(matriz) < tamaño_esperado or any(len(fila) < tamaño_esperado for fila in matriz):
-        raise ValueError('La matriz CSV no tiene el tamaño esperado.')
     return matriz
 
 # MATRIZ DE DISTANCIAS
-try:
-    ruta_distancias = os.path.join(os.getcwd(), r"C:\Users\leyca\.vscode\Phyton\IA2\matriz_distancias.csv")
-    M_distancia = leer_matriz_csv(ruta_distancias, tamaño_esperado=100)
-except (FileNotFoundError, ValueError) as e:
-    print(f"Error al cargar la matriz de distancias: {e}. Usando una matriz en ceros.")
-    M_distancia = [[0 for _ in range(100)] for _ in range(100)]
+ruta_distancias = os.path.join(os.getcwd(), r"C:\Users\leyca\.vscode\Phyton\IA2\matriz_distancias.csv")
+M_distancia = leer_matriz_csv(ruta_distancias)
 
 # MATRIZ DE COSTOS DE GASOLINA
-try:
-    ruta_gasolina = os.path.join(os.getcwd(), r"C:\Users\leyca\.vscode\Phyton\IA2\matriz_costos_combustible.csv")
-    M_gasolina = leer_matriz_csv(ruta_gasolina, tamaño_esperado=100)
-except (FileNotFoundError, ValueError) as e:
-    print(f"Error al cargar la matriz de gasolina: {e}. Usando una matriz en ceros.")
-    M_gasolina = [[0 for _ in range(100)] for _ in range(100)]
+ruta_gasolina = os.path.join(os.getcwd(), r"C:\Users\leyca\.vscode\Phyton\IA2\matriz_costos_combustible.csv")
+M_gasolina = leer_matriz_csv(ruta_gasolina)
 
 
 #----------------------------------------------------------FUNCION PRINCIPAL----------------------------------------------------------
@@ -147,11 +134,11 @@ def enfriamiento(temperatura_actual, iteracion):
 
 
 if __name__ == '__main__':
-    print("Iniciando ejemplo de Recocido Simulado...")
+    print("--------------- INICIO ---------------")
     #LLAMADA DE LAS FUNCIONES
     sol_inicial = generador_sol_ini(num_elementos=100)
-    print(f"Solución inicial: {sol_inicial}")
-    mejor_sol_encontrada, costo_minimo, costo_inicial_total = recocido_simulado(
+    print(f"Solución inicial Aleatoria: {sol_inicial}")
+    mejor_sol_encontrada, costo_final, costo_inicial_total = recocido_simulado(
         solucion_inicial=sol_inicial,
         funcion_objetivo=calcular_costo,
         generar_vecino=generar_vecino_aleatorio,
@@ -163,10 +150,10 @@ if __name__ == '__main__':
         iteraciones_por_temp=100
     )
 
-    print("\nRecocido Simulado finalizado.")
+    print("\n--- RESULTADOS FINALES ---")
     print(f"Mejor solución encontrada: {mejor_sol_encontrada}")
-    print(f"Costo inicial del algoritmo: {costo_inicial_total:.4f}")
-    print(f"Costo mínimo: {costo_minimo:.4f}")
+    print(f"Costo inicial: {costo_inicial_total:.4f}")
+    print(f"Costo final: {costo_final:.4f}")
     if costo_inicial_total > 0:
-        mejora_total_porcentaje = ((costo_inicial_total - costo_minimo) / costo_inicial_total) * 100
+        mejora_total_porcentaje = ((costo_inicial_total - costo_final) / costo_inicial_total) * 100
         print(f"Porcentaje de mejora total: {mejora_total_porcentaje:.2f}%")
