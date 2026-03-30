@@ -106,57 +106,58 @@ while True:
         swap_vecindario = Generador(sol_inicial)
         ordenamiento = ordenar_soluciones(swap_vecindario, M_distancia, M_gasolina)
 
-        mejor_sol_actual = None
-        mejor_costo_actual = float('inf')
+        mejor_sol_act = None
+        mejor_costo_actl = float('inf')
         mov_tabu = None
 
         #ordenas las soluciones con la función objetivo y checamos que no esten en la lista tabu
-        for ruta_vecina, movimiento_generador in ordenamiento:
-            costo_vecino = calcular_costo(ruta_vecina, M_distancia, M_gasolina)
+        for vecino, movimiento_generador in ordenamiento:
+            costo_vecino = calcular_costo(vecino, M_distancia, M_gasolina)
 
   # Criterio de Aspiración
   # Si el vecino es tabú, pero mejor que el mejor global
   # Se acepta 
             if costo_vecino < mejor_costo_global:
-                mejor_sol_actual = ruta_vecina
-                mejor_costo_actual = costo_vecino
+                mejor_sol_act = vecino
+                mejor_costo_actl = costo_vecino
                 mov_tabu = (movimiento_generador[1], movimiento_generador[0])
                 break
 
           # Verificam si el inverso del movimiento es tabú
-            inverse_move = (movimiento_generador[1], movimiento_generador[0])
-            es_tabu = inverse_move in lista_tabu
+            mov_inv = (movimiento_generador[1], movimiento_generador[0])
+            es_tabu = mov_inv in lista_tabu
 
             if not es_tabu:
-                mejor_sol_actual = ruta_vecina
-                mejor_costo_actual = costo_vecino
-                mov_tabu = inverse_move # Este es el movimiento que prevenimos por las próximas iteraciones
-                break # Encontramos un vecino no tabú, lo aceptamos
+                mejor_sol_act = vecino
+                mejor_costo_actl = costo_vecino
+                # guardas el movimiento nuevo que queda bloqueado por el tabu
+                mov_tabu = mov_inv
+                break 
 
         # todos los vecinos son tabú y ninguno cumple el criterio de aspiración
         # nimodo agarra la mejor solución del vecindario asi sea tabú
-        if mejor_sol_actual is None:
+        if mejor_sol_act is None:
             # la mejor solución se toma, sin importar si es tabú
-            mejor_sol_actual = ordenamiento[0][0]
-            mejor_costo_actual = calcular_costo(mejor_sol_actual, M_distancia, M_gasolina)
+            mejor_sol_act = ordenamiento[0][0]
+            mejor_costo_actl = calcular_costo(mejor_sol_act, M_distancia, M_gasolina)
 
             # no agregas el propio movimiento al tabú
             # si no que agregas el inverso para que no se regrese a como estaba
             mov_tabu = (ordenamiento[0][1][1], ordenamiento[0][1][0])
 
-        print(f"Mejor solución encontrada en esta iteración: {mejor_sol_actual} | Costo: {mejor_costo_actual}")
+        print(f"Mejor solución encontrada en esta iteración: {mejor_sol_act} | Costo: {mejor_costo_actl}")
 
         # Actualizar la solución inicial para la próxima iteración
-        sol_inicial = mejor_sol_actual
+        sol_inicial = mejor_sol_act
 
         # Añadir el inverso del movimiento a la lista tabú
         if mov_tabu is not None:
             lista_tabu.append(mov_tabu)
 
         # Actualizar la mejor solución global si se encuentra una mejor
-        if mejor_costo_actual < mejor_costo_global:
-            mejor_costo_global = mejor_costo_actual
-            mejor_solucion_global = mejor_sol_actual
+        if mejor_costo_actl < mejor_costo_global:
+            mejor_costo_global = mejor_costo_actl
+            mejor_solucion_global = mejor_sol_act
 
     print(f"\n--- RESULTADOS DESPUES DE {iteracion} ITERACIONES---")
     print(f"Mejor Solución Global Encontrada hasta ahora: {mejor_solucion_global} | Costo Total: {mejor_costo_global}")
