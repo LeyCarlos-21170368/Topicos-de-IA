@@ -1,45 +1,25 @@
-import csv
-import os
-import random
-import math
-import collections
+import csv, random, collections
 #Funcion para leer los archivos .csv con las matrices de cada grupo
 #EL CODIGO SOLO ACEPTA VALORES NUMERICOS EN LAS MATRICES, SIN ENCABEZADOS
 #unica funcion que ni nosotros sabemos como funciona, pero es para no tener que cambiar entre matrices manualmente
-def leer_matriz_csv(ruta, tamaño_esperado=10):
-    matriz = []
-    with open(ruta, newline='', encoding='utf-8') as archivo:
-        lector = csv.reader(archivo)
-        for fila in lector:
-            if fila:
-                fila_numeros = []
-                for valor in fila:
-                    try:
-                        fila_numeros.append(float(valor))
-                    except ValueError:
-                        fila_numeros.append(0.0)
-                matriz.append(fila_numeros)
-    return matriz
-
-# MATRIZ DE DISTANCIAS                                                                                            |
-try:                                                                                                           #  |
-                                                        #CAMBIAR ESTE NUMERO POR EL GRUPO QUE SE DESEA ENRUTAR    V
-    distancias = os.path.join(os.getcwd(), 'C:\\Users\\leyca\\.vscode\\Phyton\\IA2\\matriz_distancias_Centro_1.csv')
-    M_distancia = leer_matriz_csv(distancias, tamaño_esperado=10)
-except (FileNotFoundError, ValueError) as e:
-    print(f"Error al cargar la matriz de distancias: {e}. Usando una matriz en ceros.")
-    M_distancia = [[0 for _ in range(10)] for _ in range(10)]
-
-# MATRIZ DE COSTOS DE GASOLINA                                                                                   |
-try:                                                                                                        #    |
-                                                       #CAMBIAR ESTE NUMERO POR EL GRUPO QUE SE DESEA ENRUTAR    V
-    gasolina = os.path.join(os.getcwd(), 'C:\\Users\\leyca\\.vscode\\Phyton\\IA2\\costos_combustible_Centro_1.csv')
-    M_gasolina = leer_matriz_csv(gasolina, tamaño_esperado=10)
-except (FileNotFoundError, ValueError) as e:
-    print(f"Error al cargar la matriz de gasolina: {e}. Usando una matriz en ceros.")
-    M_gasolina = [[0 for _ in range(10)] for _ in range(10)]
-
-
+def carga_datos(path):
+    data = []
+    with open(path, 'r') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row: continue
+            tmp = []
+            for x in row:
+                tmp.append(float(x))
+            data.append(tmp)
+    return data
+                                                                            #  |
+# MATRICES                                                                     |
+# -----------------------------------CAMBIAR ESTOS VALORES AL CAMBIAR DE GRUPO V--------------------------------
+distancias = 'C:\\Users\\leyca\\.vscode\\Phyton\\IA2\\matriz_distancias_Centro_1.csv'
+combustible = 'C:\\Users\\leyca\\.vscode\\Phyton\\IA2\\costos_combustible_Centro_1.csv'
+m_dist = carga_datos(distancias)
+m_gas = carga_datos(combustible)
 # GENERADOR DE SOLUCIONES
 # Swaps generados entre 2 posiciones
 def Generador(Sol_Inicio):
@@ -77,9 +57,9 @@ def ordenar_soluciones(swap_vecindario, M_distancia, M_gasolina):
     return sorted(swap_vecindario, key=lambda item: calcular_costo(item[0], M_distancia, M_gasolina))
 
 # GENERACIÓN ALEATORIA DE SOLUCION INICIAL
-n = len(M_distancia)
+n = len(m_dist)
 sol_inicial = random.sample(range(1, n + 1), n)
-costo_inicial_global = calcular_costo(sol_inicial, M_distancia, M_gasolina)
+costo_inicial_global = calcular_costo(sol_inicial, m_dist, m_gas)
 
 # ITERACIONES
 vueltas = 10 # <--- Cuantas iteraciones hace el programa antes de preguntar si quieres continuar
@@ -100,11 +80,11 @@ while True:
     for iter_step in range(vueltas):
         iteracion += 1
         print(f"\n--- Iteración {iteracion} ---")
-        print(f"Solución Actual: {sol_inicial} | Costo: {calcular_costo(sol_inicial, M_distancia, M_gasolina)}")
+        print(f"Solución Actual: {sol_inicial} | Costo: {calcular_costo(sol_inicial, m_dist, m_gas)}")
 
         # MANDADA A LLAMAR DE LOS MÉTODOS
         swap_vecindario = Generador(sol_inicial)
-        ordenamiento = ordenar_soluciones(swap_vecindario, M_distancia, M_gasolina)
+        ordenamiento = ordenar_soluciones(swap_vecindario, m_dist, m_gas)
 
         mejor_sol_act = None
         mejor_costo_actl = float('inf')
@@ -112,7 +92,7 @@ while True:
 
         #ordenas las soluciones con la función objetivo y checamos que no esten en la lista tabu
         for vecino, movimiento_generador in ordenamiento:
-            costo_vecino = calcular_costo(vecino, M_distancia, M_gasolina)
+            costo_vecino = calcular_costo(vecino, m_dist, m_gas)
 
   # Criterio de Aspiración
   # Si el vecino es tabú, pero mejor que el mejor global
@@ -130,19 +110,14 @@ while True:
             if not es_tabu:
                 mejor_sol_act = vecino
                 mejor_costo_actl = costo_vecino
-                # guardas el movimiento nuevo que queda bloqueado por el tabu
                 mov_tabu = mov_inv
                 break 
 
         # todos los vecinos son tabú y ninguno cumple el criterio de aspiración
         # nimodo agarra la mejor solución del vecindario asi sea tabú
-        if mejor_sol_act is None:
-            # la mejor solución se toma, sin importar si es tabú
+        if mejor_sol_act is None:+
             mejor_sol_act = ordenamiento[0][0]
-            mejor_costo_actl = calcular_costo(mejor_sol_act, M_distancia, M_gasolina)
-
-            # no agregas el propio movimiento al tabú
-            # si no que agregas el inverso para que no se regrese a como estaba
+            mejor_costo_actl = calcular_costo(mejor_sol_act, m_dist, m_gas)
             mov_tabu = (ordenamiento[0][1][1], ordenamiento[0][1][0])
 
         print(f"Mejor solución encontrada en esta iteración: {mejor_sol_act} | Costo: {mejor_costo_actl}")
@@ -150,7 +125,7 @@ while True:
         # Actualizar la solución inicial para la próxima iteración
         sol_inicial = mejor_sol_act
 
-        # Añadir el inverso del movimiento a la lista tabú
+        # Añadir el movimiento a la lista tabú
         if mov_tabu is not None:
             lista_tabu.append(mov_tabu)
 
@@ -163,11 +138,8 @@ while True:
     print(f"Mejor Solución Global Encontrada hasta ahora: {mejor_solucion_global} | Costo Total: {mejor_costo_global}")
 
     # Calcular y mostrar la mejora
-    if costo_inicial_global > 0:
         mejora = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
         print(f"Mejora respecto a la solución inicial: {mejora:.2f}%")
-    else:
-        print("No se puede calcular la mejora porcentual (costo inicial es cero).")
 
     continuar = input("¿Desea continuar con más iteraciones? (s/n): ")
     if continuar.lower() != 's':
