@@ -41,7 +41,7 @@ except (FileNotFoundError, ValueError) as e:
 
 
 # GENERADOR DE SOLUCIONES
-# Swaps generados de 2 en 2
+# Swaps generados entre 2 posiciones
 def Generador(Sol_Inicio):
     vecindario = []
     n = len(Sol_Inicio)
