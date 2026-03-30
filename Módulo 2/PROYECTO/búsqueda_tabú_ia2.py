@@ -5,7 +5,7 @@ import math
 import collections
 #Funcion para leer los archivos .csv con las matrices de cada grupo
 #EL CODIGO SOLO ACEPTA VALORES NUMERICOS EN LAS MATRICES, SIN ENCABEZADOS
-#unica funcion que ni nosotros sabemos como funciona, pero es para no tener que cambiar los valores de la matriz 1 por 1
+#unica funcion que ni nosotros sabemos como funciona, pero es para no tener que cambiar entre matrices manualmente
 def leer_matriz_csv(ruta, tamaño_esperado=10):
     matriz = []
     with open(ruta, newline='', encoding='utf-8') as archivo:
@@ -21,16 +21,18 @@ def leer_matriz_csv(ruta, tamaño_esperado=10):
                 matriz.append(fila_numeros)
     return matriz
 
-# MATRIZ DE DISTANCIAS
-try:
+# MATRIZ DE DISTANCIAS                                                                                            |
+try:                                                                                                           #  |
+                                                        #CAMBIAR ESTE NUMERO POR EL GRUPO QUE SE DESEA ENRUTAR    V
     ruta_distancias = os.path.join(os.getcwd(), 'C:\\Users\\leyca\\.vscode\\Phyton\\IA2\\matriz_distancias_Centro_1.csv')
     M_distancia = leer_matriz_csv(ruta_distancias, tamaño_esperado=10)
 except (FileNotFoundError, ValueError) as e:
     print(f"Error al cargar la matriz de distancias: {e}. Usando una matriz en ceros.")
     M_distancia = [[0 for _ in range(10)] for _ in range(10)]
 
-# MATRIZ DE COSTOS DE GASOLINA
-try:
+# MATRIZ DE COSTOS DE GASOLINA                                                                                   |
+try:                                                                                                        #    |
+                                                       #CAMBIAR ESTE NUMERO POR EL GRUPO QUE SE DESEA ENRUTAR    V
     ruta_gasolina = os.path.join(os.getcwd(), 'C:\\Users\\leyca\\.vscode\\Phyton\\IA2\\costos_combustible_Centro_1.csv')
     M_gasolina = leer_matriz_csv(ruta_gasolina, tamaño_esperado=10)
 except (FileNotFoundError, ValueError) as e:
