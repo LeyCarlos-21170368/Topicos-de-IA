@@ -47,7 +47,8 @@ def Generador(Sol_Inicio):
         for j in range(i + 1, n):
             nueva_sol = Sol_Inicio.copy()
             nueva_sol[i], nueva_sol[j] = nueva_sol[j], nueva_sol[i]
-            vecindario.append(nueva_sol)
+            # Devolver la nueva solución y el movimiento
+            vecindario.append((nueva_sol, (i, j)))
     return vecindario
 
 # FUNCIÓN OBJETIVO
@@ -70,8 +71,8 @@ def calcular_costo(ruta, M_distancia, M_gasolina):
     return puntaje_final
 
 #ORDENADOR DE SOLUCIONES
-def ordenar_soluciones(vecindario, M_distancia, M_gasolina):
-    return sorted(vecindario, key=lambda ruta: calcular_costo(ruta, M_distancia, M_gasolina))
+def ordenar_soluciones(swap_vecindario, M_distancia, M_gasolina):
+    return sorted(swap_vecindario, key=lambda item: calcular_costo(item[0], M_distancia, M_gasolina))
 
 # GENERACIÓN ALEATORIA DE SOLUCION INICIAL
 n = len(M_distancia)
@@ -80,7 +81,7 @@ costo_inicial_global = calcular_costo(sol_inicial, M_distancia, M_gasolina)
 
 # ITERACIONES
 vueltas = 10 # <--- Cuantas iteraciones hace el programa antes de preguntar si quieres continuar
-duracion_tabu = 5000 # <--- Cuantas iteraciones se queda una solución en la lsita tabu
+duracion_tabu = 7 # <--- Cuantas iteraciones se queda un swap en la lsita tabu
 
 print("--- INICIO DE LAS ITERACIONES ---")
 print(f"Solución Inicial Global (aleatoria): {sol_inicial} | Costo Total: {costo_inicial_global}")
@@ -89,8 +90,9 @@ mejor_solucion_global = sol_inicial
 mejor_costo_global = costo_inicial_global
 iteracion = 0
 
+# La lista tabú almacena los movimientos hechos, en lugar de ciertas secuencias como [1,2]
+# Las secuencias resultaban demasiado especificas en soluciones de 10 y no evitaban busquedas locales  
 lista_tabu = collections.deque(maxlen=duracion_tabu)
-lista_tabu.append(tuple(sol_inicial)) # La solucion initial se va a la lista tabu
 
 while True:
     for iter_step in range(vueltas):
@@ -99,36 +101,55 @@ while True:
         print(f"Solución Actual: {sol_inicial} | Costo: {calcular_costo(sol_inicial, M_distancia, M_gasolina)}")
 
         # MANDADA A LLAMAR DE LOS MÉTODOS
-        resultado = Generador(sol_inicial)
-        ordenamiento = ordenar_soluciones(resultado, M_distancia, M_gasolina)
+        swap_vecindario = Generador(sol_inicial)
+        ordenamiento = ordenar_soluciones(swap_vecindario, M_distancia, M_gasolina)
 
         mejor_sol_actual = None
         mejor_costo_actual = float('inf')
+        mov_tabu = None
 
         #ordenas las soluciones con la función objetivo y checamos que no esten en la lista tabu
-        for vecino in ordenamiento:
-            costo_vecino = calcular_costo(vecino, M_distancia, M_gasolina)
-            es_tabu = tuple(vecino) in lista_tabu
+        for ruta_vecina, movimiento_generador in ordenamiento:
+            costo_vecino = calcular_costo(ruta_vecina, M_distancia, M_gasolina)
 
-            # Si no es tabu, se acepta
-            if not es_tabu:
-                mejor_sol_actual = vecino
+  # Criterio de Aspiración
+  # Si el vecino es tabú, pero mejor que el mejor global
+  # Se acepta 
+            if costo_vecino < mejor_costo_global:
+                mejor_sol_actual = ruta_vecina
                 mejor_costo_actual = costo_vecino
+                mov_tabu = (movimiento_generador[1], movimiento_generador[0])
                 break
-            # Si es tabú, se ignora y se sigue buscando.
 
-        # si todos los vecinos son tabu, se toma la mejor solución del vecindario aunque sea tabu
+          # Verificam si el inverso del movimiento es tabú
+            inverse_move = (movimiento_generador[1], movimiento_generador[0])
+            es_tabu = inverse_move in lista_tabu
+
+            if not es_tabu:
+                mejor_sol_actual = ruta_vecina
+                mejor_costo_actual = costo_vecino
+                mov_tabu = inverse_move # Este es el movimiento que prevenimos por las próximas iteraciones
+                break # Encontramos un vecino no tabú, lo aceptamos
+
+        # todos los vecinos son tabú y ninguno cumple el criterio de aspiración
+        # nimodo agarra la mejor solución del vecindario asi sea tabú
         if mejor_sol_actual is None:
-            mejor_sol_actual = ordenamiento[0]
+            # la mejor solución se toma, sin importar si es tabú
+            mejor_sol_actual = ordenamiento[0][0]
             mejor_costo_actual = calcular_costo(mejor_sol_actual, M_distancia, M_gasolina)
+
+            # no agregas el propio movimiento al tabú
+            # si no que agregas el inverso para que no se regrese a como estaba
+            mov_tabu = (ordenamiento[0][1][1], ordenamiento[0][1][0])
 
         print(f"Mejor solución encontrada en esta iteración: {mejor_sol_actual} | Costo: {mejor_costo_actual}")
 
         # Actualizar la solución inicial para la próxima iteración
         sol_inicial = mejor_sol_actual
 
-        # Añadir la nueva solución actual a la lista tabú
-        lista_tabu.append(tuple(sol_inicial))
+        # Añadir el inverso del movimiento a la lista tabú
+        if mov_tabu is not None:
+            lista_tabu.append(mov_tabu)
 
         # Actualizar la mejor solución global si se encuentra una mejor
         if mejor_costo_actual < mejor_costo_global:
@@ -138,10 +159,10 @@ while True:
     print(f"\n--- RESULTADOS DESPUES DE {iteracion} ITERACIONES---")
     print(f"Mejor Solución Global Encontrada hasta ahora: {mejor_solucion_global} | Costo Total: {mejor_costo_global}")
 
-    # Calcular y mostrar la mejora porcentual
+    # Calcular y mostrar la mejora
     if costo_inicial_global > 0:
-        mejora_porcentual = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
-        print(f"Mejora porcentual respecto a la solución inicial: {mejora_porcentual:.2f}%")
+        mejora = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
+        print(f"Mejora respecto a la solución inicial: {mejora:.2f}%")
     else:
         print("No se puede calcular la mejora porcentual (costo inicial es cero).")
 
@@ -151,5 +172,5 @@ while True:
 
 print("\n--- RESULTADOS FINALES ---")
 print(f"Mejor Solución Global Final: {mejor_solucion_global} | Costo Total: {mejor_costo_global}")
-mejora_porcentual_final = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
-print(f"Mejora porcentual final respecto a la solución inicial: {mejora_porcentual_final:.2f}%")
+mejora_final = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
+print(f"Mejora porcentual final respecto a la solución inicial: {mejora_final:.2f}%")
