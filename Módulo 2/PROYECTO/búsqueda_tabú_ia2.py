@@ -115,7 +115,7 @@ while True:
 
         # todos los vecinos son tabú y ninguno cumple el criterio de aspiración
         # nimodo agarra la mejor solución del vecindario asi sea tabú
-        if mejor_sol_act is None:+
+        if mejor_sol_act is None:
             mejor_sol_act = ordenamiento[0][0]
             mejor_costo_actl = calcular_costo(mejor_sol_act, m_dist, m_gas)
             mov_tabu = (ordenamiento[0][1][1], ordenamiento[0][1][0])
@@ -138,8 +138,8 @@ while True:
     print(f"Mejor Solución Global Encontrada hasta ahora: {mejor_solucion_global} | Costo Total: {mejor_costo_global}")
 
     # Calcular y mostrar la mejora
-        mejora = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
-        print(f"Mejora respecto a la solución inicial: {mejora:.2f}%")
+    mejora = ((costo_inicial_global - mejor_costo_global) / costo_inicial_global) * 100
+    print(f"Mejora respecto a la solución inicial: {mejora:.2f}%")
 
     continuar = input("¿Desea continuar con más iteraciones? (s/n): ")
     if continuar.lower() != 's':
